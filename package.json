@@ -1,0 +1,24 @@
+{
+  "name": "placement_api_node",
+  "version": "1.0.0",
+  "description": "API for Nagarro's Campus Learning Program",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Node"
+  ],
+  "author": "Jatin Gupta",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.17.1",
+    "errors": "^0.3.0",
+    "express": "^4.15.2",
+    "mongo": "^0.1.0",
+    "mongodb": "^2.2.25",
+    "mongoose": "^4.9.4",
+    "validator": "^7.0.0",
+    "winston": "^2.3.1"
+  }
+}
