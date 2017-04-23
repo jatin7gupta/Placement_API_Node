@@ -44,16 +44,25 @@ app.get('/api/students', function (req,res) { //get Students
         }
         res.json(students);
     })
-});
+}); //get students
 
 app.get('/api/Companies', function (req,res) { //get Companies
-    Companies.getCompanies(function (err,Companies) {
+    Companies.getCompanies(function (err,companies) {
         if(err){
             throw err;
         }
-        res.json(Companies);
+        res.json(companies);
     })
-});
+}); //get company
+
+app.get('/api/registrations', function (req, res) {
+   Registrations.getRegistrations(function (err, registrations) {
+     if(err){
+         throw err;
+     }
+     res.json(registrations);
+   });
+}); //get registrations
 //--------------------------------------------------------------
 
 //Post Methods
@@ -204,25 +213,27 @@ app.post('/api/students/update', function (req, res) {
 
 //apply function
 app.post('/api/students/apply', function (req, res) { //not working
-   var req_studentId = req.query.sId;
-   var req_companyId = req.query.cId;
+   var req_sId = req.query.sId;
+   var req_cId = req.query.cId;
 
-   if(!(validator.isMongoId(req_studentId)&& validator.isMongoId(req_companyId))){
+   if(!(validator.isMongoId(req_sId)&& validator.isMongoId(req_cId))){
        res.send('invalid ids');
        return;
    }
    var dbQuery = {};
-   if(req_companyId !== undefined && req_studentId !== undefined){
-       dbQuery.sId = ObjectID(req_studentId);
-       dbQuery.cId = ObjectID(req_companyId);
+   if(req_cId !== undefined && req_sId !== undefined){
+       dbQuery.sId = ObjectID(req_sId);
+       dbQuery.cId = ObjectID(req_cId);
        Registrations.apply(dbQuery, function (err, query_res) {
           if(err){
               throw err;
           }
           res.json(query_res);
        });
+   }else{
+       res.send('Invalid Query Parameters');
    }
-});
+});// Check if the student and company exists or not then update
 
 
 
