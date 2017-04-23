@@ -299,3 +299,40 @@ app.delete('/api/students/remove', function (req, res) {
 
 });
 
+//delete company
+app.delete('api/companies/remove', function (req, res) { //not working
+    console.log('start');
+   var cId = req.query.cId;
+   var dbQueryReg = {};
+    var dbQueryCom= {};
+
+   if(cId !== undefined){
+       if (!validator.isMongoId(cId)) {
+        res.send('Invalid company id');
+        return;
+       }
+       console.log(cId);
+       dbQueryReg.cId = ObjectID(cId); //if correct put it in dbQuery object for searching the db
+       dbQueryCom._id = ObjectID(cId);
+   }
+   else if(cId === undefined){
+       res.send('Invalid parameters');
+
+   }
+   else{
+        Companies.removeCompany(dbQueryCom, function (err, company) {
+           if(err){
+               throw err;
+           }
+           Registrations.removeRegistration(dbQueryReg, function (err, registration) {
+               if(err){
+                   throw err;
+               }
+               res.json(registration);
+           });
+           res.json(company);
+        });
+   }
+
+});
+

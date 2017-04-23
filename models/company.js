@@ -20,3 +20,8 @@ module.exports.getCompanies = function (callback, limit) {
 module.exports.addCompany = function (company, callback) {
     Companies.create(company, callback);
 };
+
+//remove company
+module.exports.removeCompany = function (query, callback) {
+    Companies.remove(query, callback);
+};
