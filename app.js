@@ -300,39 +300,47 @@ app.delete('/api/students/remove', function (req, res) {
 });
 
 //delete company
-app.delete('api/companies/remove', function (req, res) { //not working
+app.delete('/api/companies/remove', function (req, res) { //not working
     console.log('start');
-   var cId = req.query.cId;
+   var cId = req.query.id;
    var dbQueryReg = {};
-    var dbQueryCom= {};
 
-   if(cId !== undefined){
+
+
+   if(cId !== undefined) {
        if (!validator.isMongoId(cId)) {
-        res.send('Invalid company id');
-        return;
+           res.send('Invalid company id');
+           return;
        }
        console.log(cId);
        dbQueryReg.cId = ObjectID(cId); //if correct put it in dbQuery object for searching the db
-       dbQueryCom._id = ObjectID(cId);
-   }
-   else if(cId === undefined){
-       res.send('Invalid parameters');
 
    }
-   else{
+    if(cId === undefined){
+        res.send('Invalid parameters');
+
+    }
+    else{
+        var dbQueryCom= {};
+        dbQueryCom._id = ObjectID(cId);
         Companies.removeCompany(dbQueryCom, function (err, company) {
            if(err){
+               console.log('remove company');
                throw err;
+
            }
            Registrations.removeRegistration(dbQueryReg, function (err, registration) {
                if(err){
+                   console.log('remove reg')
                    throw err;
+
                }
                res.json(registration);
+               res.json(company);
            });
-           res.json(company);
-        });
-   }
+
+       });
+    }
 
 });
 
