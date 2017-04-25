@@ -301,46 +301,33 @@ app.delete('/api/students/remove', function (req, res) {
 
 //delete company
 app.delete('/api/companies/remove', function (req, res) { //not working
-    console.log('start');
-   var cId = req.query.id;
-   var dbQueryReg = {};
+    var cId = req.query.id;
+    var dbQueryReg = {};
 
+    if (cId !== undefined) {
+        if (!validator.isMongoId(cId)) {
+            res.send('Invalid company id');
+            return;
+        }
 
-
-   if(cId !== undefined) {
-       if (!validator.isMongoId(cId)) {
-           res.send('Invalid company id');
-           return;
-       }
-       console.log(cId);
-       dbQueryReg.cId = ObjectID(cId); //if correct put it in dbQuery object for searching the db
-
-   }
-    if(cId === undefined){
-        res.send('Invalid parameters');
-
-    }
-    else{
-        var dbQueryCom= {};
+        dbQueryReg.cId = ObjectID(cId); //if correct put it in dbQuery object for searching the db
+        var dbQueryCom = {};
         dbQueryCom._id = ObjectID(cId);
         Companies.removeCompany(dbQueryCom, function (err, company) {
-           if(err){
-               console.log('remove company');
-               throw err;
+            if (err) {
+                throw err;
+            }
+            Registrations.removeRegistration(dbQueryReg, function (err, registration) {
+                if (err) {
+                    throw err;
+                }
+                res.json(registration + " " + company); // Cannot send 2 responses to the client
+                //res.json(company);
+            });
 
-           }
-           Registrations.removeRegistration(dbQueryReg, function (err, registration) {
-               if(err){
-                   console.log('remove reg')
-                   throw err;
-
-               }
-               res.json(registration);
-               res.json(company);
-           });
-
-       });
+        });
     }
-
+    else{
+        res.send('Invalid parameters');
+    }
 });
-
