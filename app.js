@@ -19,6 +19,9 @@ var winston = require('winston');
 
 app.use(bodyParser.json());
 
+winston.add(winston.transports.File, {filename: 'appLog.log'});
+
+
 Students = require('./models/student');
 Companies = require('./models/company');
 Registrations = require('./models/registration');
@@ -40,33 +43,41 @@ console.log("Started running on Port 3000"); // the app will run on port 3000, a
 app.get('/api/students', function (req,res) { //get Students
     Students.getStudents(function (err,students) {
         if(err){
+            winston.log('error', err);
+            winston.log('error', "getStudents() : " +err);
             throw err;
         }
+        winston.log('info', students);
         res.json(students);
     })
-}); //get students
+});
 
 app.get('/api/Companies', function (req,res) { //get Companies
     Companies.getCompanies(function (err,companies) {
         if(err){
+            winston.log('error', err);
+            winston.log('error', "getCompanies() : " +err);
             throw err;
         }
+        winston.log('info', companies);
         res.json(companies);
     })
-}); //get company
+});
 
 app.get('/api/registrations', function (req, res) {
    Registrations.getRegistrations(function (err, registrations) {
      if(err){
+         winston.log('error', err);
+         winston.log('error', "getRegistrations() : " +err);
          throw err;
      }
+       winston.log('info', registrations);
      res.json(registrations);
    });
-}); //get registrations
-//--------------------------------------------------------------
+});
+
 
 //Post Methods
-//---------------------------------------------------------------
 app.post('/api/students/add', function (req , res) {
     var student = req.body;
 
@@ -91,17 +102,19 @@ app.post('/api/students/add', function (req , res) {
         //if everything is checked then, it shall add the data
         Students.addStudent(student, function (err, student) {
             if(err){
+                winston.log('error', err);
+                winston.log('error', "addStudent() : " +err);
                 throw err;
             }
+            winston.log('info', student);
             res.json(student);
         });
     }
     else {
         res.send('Required fields not set');
-
     }
 
-}); //add student
+});
 
 app.post('/api/companies/add', function (req, res) {
     var company = req.body;
@@ -116,8 +129,11 @@ app.post('/api/companies/add', function (req, res) {
         }
         Companies.addCompany(company, function (err, company) {
             if(err){
+                winston.log('error', err);
+                winston.log('error', "addCompany() : " +err);
                 throw err;
             }
+            winston.log('info', company);
             res.json(company);
         });
     }else {
@@ -204,11 +220,14 @@ app.post('/api/students/update', function (req, res) {
     }
     Students.updateStudents(dbQuery, student, function (err, students) {
         if(err){
+            winston.log('error', err);
+            winston.log('error', "updateStudents() : " +err);
             throw err;
         }
+        winston.log('info', students);
         res.json(students);
     });
-}); // update student
+});
 
 
 //apply function
@@ -226,8 +245,11 @@ app.post('/api/students/apply', function (req, res) { //not working
        dbQuery.cId = ObjectID(req_cId);
        Registrations.apply(dbQuery, function (err, query_res) {
           if(err){
+              winston.log('error', err);
+              winston.log('error', "apply() : " +err);
               throw err;
           }
+           winston.log('info', query_res);
           res.json(query_res);
        });
    }else{
@@ -292,8 +314,11 @@ app.delete('/api/students/remove', function (req, res) {
 
     Students.deleteStudents(dbQuery, function (err, student) {
         if(err){
+            winston.log('error', err);
+            winston.log('error', "deleteStudents() : " +err);
             throw err;
         }
+        winston.log('info', student);
         res.json(student);
     })
 
@@ -303,31 +328,63 @@ app.delete('/api/students/remove', function (req, res) {
 app.delete('/api/companies/remove', function (req, res) { //not working
     var cId = req.query.id;
     var dbQueryReg = {};
-
     if (cId !== undefined) {
         if (!validator.isMongoId(cId)) {
             res.send('Invalid company id');
             return;
         }
-
         dbQueryReg.cId = ObjectID(cId); //if correct put it in dbQuery object for searching the db
         var dbQueryCom = {};
         dbQueryCom._id = ObjectID(cId);
         Companies.removeCompany(dbQueryCom, function (err, company) {
             if (err) {
+                winston.log('error', err);
+                winston.log('error', "removeCompany() : " +err);
                 throw err;
             }
             Registrations.removeRegistration(dbQueryReg, function (err, registration) {
                 if (err) {
+                    winston.log('error', err);
+                    winston.log('error', "removeRegistrations() : " +err);
                     throw err;
                 }
+                winston.log('info', registration);
+                winston.log('info', company);
                 res.json(registration + " " + company); // Cannot send 2 responses to the client
                 //res.json(company);
             });
-
         });
     }
     else{
         res.send('Invalid parameters');
     }
+});
+
+//deregister student
+app.delete('/api/students/unregister', function (req, res) {
+    var sId = req.query.sId;
+    var cId = req.query.cId;
+    var dbQuery = {};
+    if(cId !== undefined && sId !== undefined){
+        if(!validator.isMongoId(cId)){
+            res.send('Invalid id');
+            return;
+        }
+        if(!validator.isMongoId(sId)){
+            res.send('Invalid id');
+            return;
+        }
+        dbQuery.sId = ObjectID(sId);
+        dbQuery.cId = ObjectID(cId);
+        Registrations.removeRegistration(dbQuery, function (err, registration) {
+           if(err){
+               winston.log('error', err);
+               winston.log('error', "removeRegistration() : " +err);
+               throw err;
+           }
+            winston.log('info', registration);
+           res.json(registration);
+        });
+    }
+
 });
