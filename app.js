@@ -22,13 +22,13 @@ app.use(bodyParser.json());
 
 winston.add(winston.transports.File, {filename: 'appLog.log'}); //logging in appLog.log file
 
-
-Students = require('./models/student'); //importing
+//imports
+Students = require('./models/student');
 Companies = require('./models/company');
 Registrations = require('./models/registration');
 
 mongoose.connect('mongodb://localhost/placement'); // connecting to mongoDB
-var db = mongoose.connection;
+//var db = mongoose.connection;
 
 var departmentList = ['cse', 'ece', 'eee', 'me', 'cv'];
 
@@ -92,7 +92,6 @@ app.listen(3000); // It will be seen by typing this in browser http://localhost:
 console.log("Started running on Port 3000"); // the app will run on port 3000, and this will indicate the success of it
 
 //Get Methods
-//-----------------------------------------------------------
 app.get('/api/students', function (req,res) { //get Students
     Students.getStudents(function (err,students) {
         if(err){
@@ -137,7 +136,7 @@ app.get('/api/registrations', function (req, res) {
 
 
 //Post Methods
-app.post('/api/students/add', function (req , res) {
+app.post('/api/students/add', function (req , res) { //add student
     var student = req.body;
 
     if(student.hasOwnProperty("name") && student.hasOwnProperty("department") && student.hasOwnProperty("rollno") && student.hasOwnProperty("cgpa")){
@@ -177,14 +176,14 @@ app.post('/api/students/add', function (req , res) {
 
 });
 
-app.post('/api/companies/add', function (req, res) {
+app.post('/api/companies/add', function (req, res) { //add company
     var company = req.body;
     if(company.hasOwnProperty("name") && company.hasOwnProperty("date_of_Placement")){
         if(!validator.isByteLength(company.name, {min:2, max:70})){ //Minimum name of company size is 2 and max is 70 char
             res.send(new errors.FailedNameValidation().toString());
             return;
         }
-        if(!validator.isAfter(company.date_of_Placement)){
+        if(!validator.isAfter(company.date_of_Placement)){ //VALIDATE DATE
             res.send(new error.FailedDateValidation().toString());
             return;
         }
@@ -204,7 +203,7 @@ app.post('/api/companies/add', function (req, res) {
     }
 });
 
-app.post('/api/students/update', function (req, res) {
+app.post('/api/students/update', function (req, res) { //update student
     var student = req.body;
     var reqId = req.query.id;
     var reqName = req.query.name;
@@ -234,7 +233,7 @@ app.post('/api/students/update', function (req, res) {
     }
     if(reqDepartment !== undefined){
         if(validator.isIn(reqDepartment.toLowerCase(), departmentList)){
-            dbQuery.department = reqDepartment;
+            dbQuery.department = reqDepartment.toLowerCase();
         }
         else {
             res.send(new errors.FailedDepartmentValidation());
@@ -246,11 +245,11 @@ app.post('/api/students/update', function (req, res) {
             dbQuery.rollno = reqRollNo;
         }
         else {
-            res.send(new errors.FailedRollnoValidation()); //FIX THIS
+            res.send(new errors.FailedRollnoValidation());
             return;
         }
     }
-    if(reqCgpa !== undefined){ //fix this
+    if(reqCgpa !== undefined){
         if(validator.isFloat(reqCgpa,  {min: 0.1, max : 10.0})){
             dbQuery.cgpa = reqCgpa;
         }
@@ -271,13 +270,13 @@ app.post('/api/students/update', function (req, res) {
             return;
         }
     }
-    if(student.hasOwnProperty('rollno')){ //fix this
+    if(student.hasOwnProperty('rollno')){
         if(!validator.isInt(student.rollno)){
             res.send(new errors.FailedRollnoValidation());
             return;
         }
     }
-    if(student.hasOwnProperty('cgpa')){ // fix this
+    if(student.hasOwnProperty('cgpa')){
         if(!validator.isFloat(student.cgpa,  {min: 0.1, max : 10.0})){
             res.send(new errors.FailedCGPAValidation());
             return;
@@ -296,9 +295,7 @@ app.post('/api/students/update', function (req, res) {
     });
 });
 
-
-//apply function
-app.post('/api/students/apply', function (req, res) { //not working
+app.post('/api/students/register', function (req, res) {// Check if the student and company exists or not then update
    var req_sId = req.query.sId;
    var req_cId = req.query.cId;
 
@@ -324,7 +321,7 @@ app.post('/api/students/apply', function (req, res) { //not working
    }else{
        res.send(new errors.RequiredFieldNotSet());
    }
-});// Check if the student and company exists or not then update
+});
 
 
 
@@ -369,11 +366,11 @@ app.delete('/api/students/remove', function (req, res) {
             dbQuery.rollno = reqRollNo;
         }
         else {
-            res.send(new errors.FailedRollnoValidation()); //FIX THIS
+            res.send(new errors.FailedRollnoValidation());
             return;
         }
     }
-    if(reqCgpa !== undefined){ //fix this
+    if(reqCgpa !== undefined){
         if(validator.isFloat(reqCgpa,  {min: 0.1, max : 10.0})){
             dbQuery.cgpa = reqCgpa;
         }
@@ -398,7 +395,7 @@ app.delete('/api/students/remove', function (req, res) {
 });
 
 //delete company
-app.delete('/api/companies/remove', function (req, res) { //not working
+app.delete('/api/companies/remove', function (req, res) {
     var cId = req.query.id;
     var dbQueryReg = {};
     if (cId !== undefined) {
