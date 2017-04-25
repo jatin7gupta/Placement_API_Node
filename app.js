@@ -7,6 +7,7 @@ var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 
 var mongo = require('mongodb').MongoClient;
+
 var ObjectID = require('mongodb').ObjectID;
 
 var ObjectId = require('mongoose').ObjectID;
@@ -19,10 +20,10 @@ var winston = require('winston');
 
 app.use(bodyParser.json());
 
-winston.add(winston.transports.File, {filename: 'appLog.log'});
+winston.add(winston.transports.File, {filename: 'appLog.log'}); //logging in appLog.log file
 
 
-Students = require('./models/student');
+Students = require('./models/student'); //importing
 Companies = require('./models/company');
 Registrations = require('./models/registration');
 
@@ -31,7 +32,59 @@ var db = mongoose.connection;
 
 var departmentList = ['cse', 'ece', 'eee', 'me', 'cv'];
 
+errors.create({
+    name : 'FailedNameValidation',
+    code: 1,
+    defaultMessage : 'Invalid Name',
+    defaultExplanation : 'The String is not a valid Name. It must be more than 2 characters and below 70 characters',
+    defaultResponse : 'Unable to complete the query, change the name and try again'
+});
+errors.create({
+    name : 'FailedDepartmentValidation',
+    code: 2,
+    defaultMessage : 'Invalid Department',
+    defaultExplanation : 'The String is not a valid Department. It must be from the following cse, ece, eee, me, cv',
+    defaultResponse : 'Unable to complete the query, change the department and try again'
+});
+errors.create({
+    name : 'FailedRollnoValidation',
+    code: 3,
+    defaultMessage : 'Invalid Rollno',
+    defaultExplanation : 'The String is not a valid Rollno. It must be an integer',
+    defaultResponse : 'Unable to complete the query, corrent the Rollno and try again'
+});
+errors.create({
+    name : 'FailedCGPAValidation',
+    code: 4,
+    defaultMessage : 'Invalid CGPA',
+    defaultExplanation : 'The String is not a valid cgpa. It must be a float between 0.1 - 10.0',
+    defaultResponse : 'Unable to complete the query, correct the cgpa and try again'
+});
+errors.create({
+    name : 'RequiredFiledNotSet',
+    code: 5,
+    defaultMessage : 'Required Field not set',
+    defaultExplanation : 'The JSON provided does not set the required fields',
+    defaultResponse : 'Unable to complete the query, fill the required fields and try again'
+});
+errors.create({
+    name : 'FailedDateValidation',
+    code: 6,
+    defaultMessage : 'Invalid Date or You cant register',
+    defaultExplanation : 'The String is not a valid Date. It must be a in the format of MM-DD-YYYY',
+    defaultResponse : 'Unable to complete the query, fill the required fields in correct format and try again'
+});
+errors.create({
+    name : 'FailedMongoIdValidation',
+    code: 7,
+    defaultMessage : 'Invalid Mongo ID',
+    defaultExplanation : 'The String is not a valid Mongo ID',
+    defaultResponse : 'Unable to complete the query, fill the required Mongo Id in correct format and try again'
+});
+
+
 app.get('/', function(req,res){
+    winston.log('info', "Status Code :"+res.statusCode );
     res.send('Placement APIs'); //default page of the APIs
 });
 
@@ -43,10 +96,12 @@ console.log("Started running on Port 3000"); // the app will run on port 3000, a
 app.get('/api/students', function (req,res) { //get Students
     Students.getStudents(function (err,students) {
         if(err){
+            winston.log('info', "Status Code :"+res.statusCode );
             winston.log('error', err);
             winston.log('error', "getStudents() : " +err);
             throw err;
         }
+        winston.log('info', "Status Code :"+res.statusCode );
         winston.log('info', students);
         res.json(students);
     })
@@ -55,10 +110,12 @@ app.get('/api/students', function (req,res) { //get Students
 app.get('/api/Companies', function (req,res) { //get Companies
     Companies.getCompanies(function (err,companies) {
         if(err){
+            winston.log('info', "Status Code :"+res.statusCode );
             winston.log('error', err);
             winston.log('error', "getCompanies() : " +err);
             throw err;
         }
+        winston.log('info', "Status Code :"+res.statusCode );
         winston.log('info', companies);
         res.json(companies);
     })
@@ -67,12 +124,14 @@ app.get('/api/Companies', function (req,res) { //get Companies
 app.get('/api/registrations', function (req, res) {
    Registrations.getRegistrations(function (err, registrations) {
      if(err){
+         winston.log('info', "Status Code :"+res.statusCode );
          winston.log('error', err);
          winston.log('error', "getRegistrations() : " +err);
          throw err;
      }
+       winston.log('info', "Status Code :"+res.statusCode );
        winston.log('info', registrations);
-     res.json(registrations);
+       res.json(registrations);
    });
 });
 
@@ -83,35 +142,37 @@ app.post('/api/students/add', function (req , res) {
 
     if(student.hasOwnProperty("name") && student.hasOwnProperty("department") && student.hasOwnProperty("rollno") && student.hasOwnProperty("cgpa")){
         if(!validator.isByteLength(student.name, {min:2, max:70})){ //Minimum name size is 2 and max is 70 char
-            res.send("Please Enter name only");
+            res.send(new errors.FailedNameValidation().toString());
             return;
         }
         if(!validator.isIn(student.department.toLowerCase(), departmentList)){
-            res.send('Kindly put the value between cse, ece, eee, me, cv'); // only these values supported
+            res.send(new errors.FailedDepartmentValidation().toString()); // only these values supported
             return;
         }
         if(!validator.isInt(student.rollno)){ //rollnumber must be a Integer
-            res.send("Enter only numeric values");
+            res.send(new errors.FailedRollnoValidation().toString());
             return;
         }
         if(!validator.isFloat(student.cgpa, {min: 0.1, max : 10.0})){ //enter CGPA between 0.1 and 10 only
-            res.send("CGPA entered is not valid, enter it between 0.1 - 10.0");
+            res.send(new errors.FailedCGPAValidation().toString());
             return;
         }
 
         //if everything is checked then, it shall add the data
         Students.addStudent(student, function (err, student) {
             if(err){
+                winston.log('info', "Status Code :"+res.statusCode );
                 winston.log('error', err);
                 winston.log('error', "addStudent() : " +err);
                 throw err;
             }
+            winston.log('info', "Status Code :"+res.statusCode );
             winston.log('info', student);
             res.json(student);
         });
     }
     else {
-        res.send('Required fields not set');
+        res.send(new errors.RequiredFieldNotSet().toString());
     }
 
 });
@@ -120,26 +181,28 @@ app.post('/api/companies/add', function (req, res) {
     var company = req.body;
     if(company.hasOwnProperty("name") && company.hasOwnProperty("date_of_Placement")){
         if(!validator.isByteLength(company.name, {min:2, max:70})){ //Minimum name of company size is 2 and max is 70 char
-            res.send("Please Enter company names only");
+            res.send(new errors.FailedNameValidation().toString());
             return;
         }
         if(!validator.isAfter(company.date_of_Placement)){
-            res.send('Please enter a Valid date');
+            res.send(new error.FailedDateValidation().toString());
             return;
         }
         Companies.addCompany(company, function (err, company) {
             if(err){
+                winston.log('info', "Status Code :"+res.statusCode );
                 winston.log('error', err);
                 winston.log('error', "addCompany() : " +err);
                 throw err;
             }
+            winston.log('info', "Status Code :"+res.statusCode );
             winston.log('info', company);
             res.json(company);
         });
     }else {
-        res.send('Required Fields not set');
+        res.send(new error.RequiredFieldNotSet().toString());
     }
-}); //add company
+});
 
 app.post('/api/students/update', function (req, res) {
     var student = req.body;
@@ -156,7 +219,7 @@ app.post('/api/students/update', function (req, res) {
             dbQuery._id = ObjectID(reqId); //if correct put it in dbQuery object for searching the db
         }
         else {
-            res.send('The ID is wrong in the query');
+            res.send(new errors.FailedMongoIdValidation());
             return;
         }
     }
@@ -165,7 +228,7 @@ app.post('/api/students/update', function (req, res) {
             dbQuery.name = reqName;
         }
         else{
-            res.send('The Name is invalid');
+            res.send(new errors.FailedNameValidation());
             return;
         }
     }
@@ -174,7 +237,7 @@ app.post('/api/students/update', function (req, res) {
             dbQuery.department = reqDepartment;
         }
         else {
-            res.send('This Department is invalid');
+            res.send(new errors.FailedDepartmentValidation());
             return;
         }
     }
@@ -183,7 +246,8 @@ app.post('/api/students/update', function (req, res) {
             dbQuery.rollno = reqRollNo;
         }
         else {
-            res.send('This roll is invalid'); //FIX THIS
+            res.send(new errors.FailedRollnoValidation()); //FIX THIS
+            return;
         }
     }
     if(reqCgpa !== undefined){ //fix this
@@ -191,39 +255,42 @@ app.post('/api/students/update', function (req, res) {
             dbQuery.cgpa = reqCgpa;
         }
         else{
+            res.send(new errors.FailedCGPAValidation());
             return;
         }
     }
     if( student.hasOwnProperty('name')){
         if(!validator.isByteLength(student.name, {min:2, max:70})){
-            res.send('this is invalid name');
+            res.send(new errors.FailedNameValidation());
             return;
         }
     }
     if(student.hasOwnProperty('department')){
         if(!validator.isIn(student.department.toLowerCase(), departmentList)){
-            res.send("invalid dept");
+            res.send(new errors.FailedDepartmentValidation());
             return;
         }
     }
     if(student.hasOwnProperty('rollno')){ //fix this
         if(!validator.isInt(student.rollno)){
-            res.send('invalid rollno');
+            res.send(new errors.FailedRollnoValidation());
             return;
         }
     }
     if(student.hasOwnProperty('cgpa')){ // fix this
         if(!validator.isFloat(student.cgpa,  {min: 0.1, max : 10.0})){
-            res.send('invalid cgpa');
+            res.send(new errors.FailedCGPAValidation());
             return;
         }
     }
     Students.updateStudents(dbQuery, student, function (err, students) {
         if(err){
+            winston.log('info', "Status Code :"+res.statusCode );
             winston.log('error', err);
             winston.log('error', "updateStudents() : " +err);
             throw err;
         }
+        winston.log('info', "Status Code :"+res.statusCode );
         winston.log('info', students);
         res.json(students);
     });
@@ -236,7 +303,7 @@ app.post('/api/students/apply', function (req, res) { //not working
    var req_cId = req.query.cId;
 
    if(!(validator.isMongoId(req_sId)&& validator.isMongoId(req_cId))){
-       res.send('invalid ids');
+       res.send(new errors.FailedMongoIdValidation());
        return;
    }
    var dbQuery = {};
@@ -245,15 +312,17 @@ app.post('/api/students/apply', function (req, res) { //not working
        dbQuery.cId = ObjectID(req_cId);
        Registrations.apply(dbQuery, function (err, query_res) {
           if(err){
+              winston.log('info', "Status Code :"+res.statusCode );
               winston.log('error', err);
               winston.log('error', "apply() : " +err);
               throw err;
           }
+           winston.log('info', "Status Code :"+res.statusCode );
            winston.log('info', query_res);
-          res.json(query_res);
+           res.json(query_res);
        });
    }else{
-       res.send('Invalid Query Parameters');
+       res.send(new errors.RequiredFieldNotSet());
    }
 });// Check if the student and company exists or not then update
 
@@ -273,7 +342,7 @@ app.delete('/api/students/remove', function (req, res) {
             dbQuery._id = ObjectID(reqId); //if correct put it in dbQuery object for searching the db
         }
         else {
-            res.send('The ID is wrong in the query');
+            res.send(new errors.FailedMongoIdValidation());
             return;
         }
     }
@@ -282,7 +351,7 @@ app.delete('/api/students/remove', function (req, res) {
             dbQuery.name = reqName;
         }
         else{
-            res.send('The Name is invalid');
+            res.send(new errors.FailedNameValidation());
             return;
         }
     }
@@ -291,7 +360,7 @@ app.delete('/api/students/remove', function (req, res) {
             dbQuery.department = reqDepartment;
         }
         else {
-            res.send('This Department is invalid');
+            res.send(new errors.FailedDepartmentValidation());
             return;
         }
     }
@@ -300,7 +369,8 @@ app.delete('/api/students/remove', function (req, res) {
             dbQuery.rollno = reqRollNo;
         }
         else {
-            res.send('This roll is invalid'); //FIX THIS
+            res.send(new errors.FailedRollnoValidation()); //FIX THIS
+            return;
         }
     }
     if(reqCgpa !== undefined){ //fix this
@@ -308,16 +378,19 @@ app.delete('/api/students/remove', function (req, res) {
             dbQuery.cgpa = reqCgpa;
         }
         else{
+            res.send(new errors.FailedCGPAValidation());
             return;
         }
     }
 
     Students.deleteStudents(dbQuery, function (err, student) {
         if(err){
+            winston.log('info', "Status Code :"+res.statusCode );
             winston.log('error', err);
             winston.log('error', "deleteStudents() : " +err);
             throw err;
         }
+        winston.log('info', "Status Code :"+res.statusCode );
         winston.log('info', student);
         res.json(student);
     })
@@ -330,7 +403,7 @@ app.delete('/api/companies/remove', function (req, res) { //not working
     var dbQueryReg = {};
     if (cId !== undefined) {
         if (!validator.isMongoId(cId)) {
-            res.send('Invalid company id');
+            res.send(new errors.FailedMongoIdValidation());
             return;
         }
         dbQueryReg.cId = ObjectID(cId); //if correct put it in dbQuery object for searching the db
@@ -344,10 +417,12 @@ app.delete('/api/companies/remove', function (req, res) { //not working
             }
             Registrations.removeRegistration(dbQueryReg, function (err, registration) {
                 if (err) {
+                    winston.log('info', "Status Code :"+res.statusCode );
                     winston.log('error', err);
                     winston.log('error', "removeRegistrations() : " +err);
                     throw err;
                 }
+                winston.log('info', "Status Code :"+res.statusCode );
                 winston.log('info', registration);
                 winston.log('info', company);
                 res.json(registration + " " + company); // Cannot send 2 responses to the client
@@ -356,32 +431,34 @@ app.delete('/api/companies/remove', function (req, res) { //not working
         });
     }
     else{
-        res.send('Invalid parameters');
+        res.send(new errors.FailedMongoIdValidation());
     }
 });
 
-//deregister student
+//unregister student
 app.delete('/api/students/unregister', function (req, res) {
     var sId = req.query.sId;
     var cId = req.query.cId;
     var dbQuery = {};
     if(cId !== undefined && sId !== undefined){
         if(!validator.isMongoId(cId)){
-            res.send('Invalid id');
+            res.send(new errors.FailedMongoIdValidation());
             return;
         }
         if(!validator.isMongoId(sId)){
-            res.send('Invalid id');
+            res.send(new errors.FailedMongoIdValidation());
             return;
         }
         dbQuery.sId = ObjectID(sId);
         dbQuery.cId = ObjectID(cId);
         Registrations.removeRegistration(dbQuery, function (err, registration) {
            if(err){
+               winston.log('info', "Status Code :"+res.statusCode );
                winston.log('error', err);
                winston.log('error', "removeRegistration() : " +err);
                throw err;
            }
+            winston.log('info', "Status Code :"+res.statusCode );
             winston.log('info', registration);
            res.json(registration);
         });
