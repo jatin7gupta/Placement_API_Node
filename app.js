@@ -178,6 +178,7 @@ app.post('/api/students/add', function (req , res) { //add student
 
 app.post('/api/companies/add', function (req, res) { //add company
     var company = req.body;
+
     if(company.hasOwnProperty("name") && company.hasOwnProperty("date_of_Placement")){
         if(!validator.isByteLength(company.name, {min:2, max:70})){ //Minimum name of company size is 2 and max is 70 char
             res.send(new errors.FailedNameValidation().toString());
@@ -324,7 +325,6 @@ app.post('/api/students/register', function (req, res) {
 });
 
 
-
 //delete functions
 //delete students
 app.delete('/api/students/remove', function (req, res) {
@@ -381,7 +381,7 @@ app.delete('/api/students/remove', function (req, res) {
         }
     }
 
-    Students.deleteStudents(dbQuery, function (err, student) {
+    Students.removeStudents(dbQuery, function (err, student) {
         if(err){
             winston.log('info', "Status Code :"+res.statusCode );
             winston.log('error', err);
@@ -424,7 +424,6 @@ app.delete('/api/companies/remove', function (req, res) {
                 winston.log('info', registration);
                 winston.log('info', company);
                 res.json(registration + " " + company); // Cannot send 2 responses to the client
-                //res.json(company);
             });
         });
     }

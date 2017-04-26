@@ -36,7 +36,7 @@ module.exports.updateStudents = function (dbQuery, student, callback) { //multi 
     Students.update(dbQuery, student, {multi : true }, callback);
 };
 
-module.exports.deleteStudents = function (dbQuery, callback) {
+module.exports.removeStudents = function (dbQuery, callback) {
   Students.remove(dbQuery, callback);
 };
 
