@@ -106,7 +106,7 @@ app.get('/api/students', function (req,res) { //get Students
     })
 });
 
-app.get('/api/Companies', function (req,res) { //get Companies
+app.get('/api/companies', function (req,res) { //get Companies
     Companies.getCompanies(function (err,companies) {
         if(err){
             winston.log('info', "Status Code :"+res.statusCode );
@@ -295,7 +295,7 @@ app.post('/api/students/update', function (req, res) { //update student
     });
 });
 
-app.post('/api/students/register', function (req, res) {// Check if the student and company exists or not then update
+app.post('/api/students/register', function (req, res) {
    var req_sId = req.query.sId;
    var req_cId = req.query.cId;
 
@@ -326,6 +326,7 @@ app.post('/api/students/register', function (req, res) {// Check if the student 
 
 
 //delete functions
+//delete students
 app.delete('/api/students/remove', function (req, res) {
     var reqId = req.query.id;
     var reqName = req.query.name;
@@ -459,6 +460,8 @@ app.delete('/api/students/unregister', function (req, res) {
             winston.log('info', registration);
            res.json(registration);
         });
+    }else{
+        res.send(new errors.FailedMongoIdValidation());
     }
 
 });
