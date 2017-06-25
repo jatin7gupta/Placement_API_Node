@@ -20,6 +20,10 @@ var winston = require('winston');
 
 app.use(bodyParser.json());
 
+var cors = require('cors');
+
+app.use(cors());
+
 winston.add(winston.transports.File, {filename: 'appLog.log'}); //logging in appLog.log file
 
 //imports
