@@ -14,7 +14,7 @@ module.exports.apply = function (registration, callback) { //used update because
 }; // using UPSERT: If set to true, creates a new document when no document matches the query criteria. The default value is false, which does not insert a new document when no match is found.
 
 //get registrations
-module.exports.getRegistrations = function (query, callback, limit) {
+module.exports.getRegistrations = function (callback, limit) {
   Registrations.find(callback).limit(limit);
 };
 

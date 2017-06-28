@@ -126,6 +126,7 @@ app.get('/api/companies', function (req,res) { //get Companies
 
 app.get('/api/registrations', function (req, res) {
    Registrations.getRegistrations(function (err, registrations) {
+       console.log(registrations);
      if(err){
          winston.log('info', "Status Code :"+res.statusCode );
          winston.log('error', err);
@@ -206,6 +207,70 @@ app.post('/api/companies/add', function (req, res) { //add company
     }else {
         res.send(new error.RequiredFieldNotSet().toString());
     }
+});
+
+app.post('/api/companies/update', function (req, res) { //update company
+    var company = req.body;
+    var reqId = req.query.id;
+    var reqName = req.query.name;
+    var reqDate = req.query.date_of_Placement;
+
+    var dbQuery = {};
+    if(reqId !== undefined) { //check if the request id is correct or not
+        if (validator.isMongoId(reqId)) {
+            dbQuery._id = ObjectID(reqId); //if correct put it in dbQuery object for searching the db
+            console.log(dbQuery._id);
+        }
+        else {
+            res.send(new errors.FailedMongoIdValidation());
+            return;
+        }
+    }
+    if(reqName !== undefined){
+        if(validator.isByteLength(reqName, {min:2, max:70})){
+            dbQuery.name = reqName;
+        }
+        else{
+            res.send(new errors.FailedNameValidation());
+            return;
+        }
+    }
+    if(reqDate !== undefined){
+        if(!validator.isAfter(reqDate)){ //VALIDATE DATE
+            res.send(new error.FailedDateValidation().toString());
+            return;
+        }
+        dbQuery.date_of_Placement = reqDate;
+    }
+
+    if(company.hasOwnProperty("name")) {
+        if(!validator.isByteLength(company.name, {min:2, max:70})){ //Minimum name of company size is 2 and max is 70 char
+            res.send(new errors.FailedNameValidation().toString());
+            return;
+        }
+    }
+    if(company.hasOwnProperty("date_of_Placement")){
+        if(!validator.isAfter(company.date_of_Placement)){ //VALIDATE DATE
+            res.send(new error.FailedDateValidation().toString());
+            return;
+        }
+
+    }else {
+        console.log('activitated');
+        res.send(new error.RequiredFieldNotSet().toString());
+    }
+    Companies.updateCompany(dbQuery, company, function (err, company) {
+        if(err){
+            winston.log('info', "Status Code :"+res.statusCode );
+            winston.log('error', err);
+            winston.log('error', "addCompany() : " +err);
+            throw err;
+        }
+        winston.log('info', "Status Code :"+res.statusCode );
+        winston.log('info', company);
+        res.json(company);
+
+    });
 });
 
 app.post('/api/students/update', function (req, res) { //update student

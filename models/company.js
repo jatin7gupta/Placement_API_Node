@@ -25,3 +25,6 @@ module.exports.addCompany = function (company, callback) {
 module.exports.removeCompany = function (query, callback) {
     Companies.remove(query, callback);
 };
+module.exports.updateCompany = function (dbQuery, company, callback) { //multi update
+    Companies.update(dbQuery, company, {multi : true }, callback);
+};
